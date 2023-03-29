@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::ffi::c_ushort;
 
 const INPUT: &str = include_str!("input.txt");
 
@@ -45,7 +44,10 @@ impl Sack {
     fn duplicated(self) -> Stuff {
         let a = self.0.into_iter().collect::<HashSet<Stuff>>();
         let b = self.1.into_iter().collect::<HashSet<Stuff>>();
-        a.intersection(&b).copied().collect::<Vec<Stuff>>().remove(0)
+        a.intersection(&b)
+            .copied()
+            .collect::<Vec<Stuff>>()
+            .remove(0)
     }
 }
 
@@ -59,33 +61,50 @@ impl MergedSack {
 }
 
 fn parse(input: &str) -> Vec<Sack> {
-    input.lines().map(|line| {
-        let side_1 = line[..line.len()/2].chars().map(|c| c.into()).collect::<Vec<Stuff>>();
+    input
+        .lines()
+        .map(|line| {
+            let side_1 = line[..line.len() / 2]
+                .chars()
+                .map(|c| c.into())
+                .collect::<Vec<Stuff>>();
 
-        let side_2 = line[line.len()/2..].chars().map(|c| c.into()).collect::<Vec<Stuff>>();
-        (side_1, side_2).into()
-    }).collect()
+            let side_2 = line[line.len() / 2..]
+                .chars()
+                .map(|c| c.into())
+                .collect::<Vec<Stuff>>();
+            (side_1, side_2).into()
+        })
+        .collect()
 }
 
 #[test]
 fn part1() {
     let sacks = parse(INPUT);
-    let sum_prios = sacks.into_iter().map(|sack| {sack.duplicated().priority()}).sum::<usize>();
+    let sum_prios = sacks
+        .into_iter()
+        .map(|sack| sack.duplicated().priority())
+        .sum::<usize>();
     println!("{:?}", sum_prios);
 }
 
 #[test]
 fn part2() {
     let sacks = parse(INPUT);
-    let merged_sacks = sacks.into_iter().map(|s| MergedSack::from_sack(s)).collect::<Vec<_>>();
-    let merged_prio_sum = merged_sacks.chunks(3).map(|c| {
-        let a = &c[0].0.iter().copied().collect::<HashSet<_>>();
-        let b = &c[1].0.iter().copied().collect::<HashSet<_>>();
-        let c =&c[2].0.iter().copied().collect::<HashSet<_>>();
-        let i1 = a.intersection(&b).copied().collect::<HashSet<_>>();
-        let i2 = b.intersection(&c).copied().collect::<HashSet<_>>();
-        i1.intersection(&i2).copied().collect::<Vec<_>>()[0].priority()
-    }).sum::<usize>();
+    let merged_sacks = sacks
+        .into_iter()
+        .map(|s| MergedSack::from_sack(s))
+        .collect::<Vec<_>>();
+    let merged_prio_sum = merged_sacks
+        .chunks(3)
+        .map(|c| {
+            let a = &c[0].0.iter().copied().collect::<HashSet<_>>();
+            let b = &c[1].0.iter().copied().collect::<HashSet<_>>();
+            let c = &c[2].0.iter().copied().collect::<HashSet<_>>();
+            let i1 = a.intersection(&b).copied().collect::<HashSet<_>>();
+            let i2 = b.intersection(&c).copied().collect::<HashSet<_>>();
+            i1.intersection(&i2).copied().collect::<Vec<_>>()[0].priority()
+        })
+        .sum::<usize>();
     println!("{:?}", merged_prio_sum);
 }
-

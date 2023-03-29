@@ -12,16 +12,25 @@ impl Elf {
 }
 
 fn parse(input: &str) -> Vec<Elf> {
-    input.split("\r\n\r\n").map(|lines| {
-        Elf { calories: lines.lines().map(|line| line.parse().expect("a number")).collect() }
-    }).collect()
+    input
+        .split("\r\n\r\n")
+        .map(|lines| Elf {
+            calories: lines
+                .lines()
+                .map(|line| line.parse().expect("a number"))
+                .collect(),
+        })
+        .collect()
 }
 
 #[test]
 fn part1() {
     let elves = parse(INPUT);
     println!("{:?}", elves);
-    let mut elves = elves.iter().map(Elf::total_calories).collect::<Vec<usize>>();
+    let mut elves = elves
+        .iter()
+        .map(Elf::total_calories)
+        .collect::<Vec<usize>>();
     println!("{:?}", elves);
     elves.sort_unstable();
     elves.reverse();
@@ -34,7 +43,10 @@ fn part1() {
 fn part2() {
     let elves = parse(INPUT);
     println!("{:?}", elves);
-    let mut elves = elves.iter().map(Elf::total_calories).collect::<Vec<usize>>();
+    let mut elves = elves
+        .iter()
+        .map(Elf::total_calories)
+        .collect::<Vec<usize>>();
     println!("{:?}", elves);
     elves.sort_unstable();
     elves.reverse();
