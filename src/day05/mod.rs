@@ -131,10 +131,48 @@ fn apply_moves(stacks: &mut HashMap<usize, Stack>, moves: &Vec<Move>) {
     }
 }
 
+fn apply_moves_together(stacks: &mut HashMap<usize, Stack>, moves: &Vec<Move>) {
+    for m in moves {
+        let mut t = Vec::new();
+        for _ in 0..m.count {
+            t.push(
+                stacks
+                    .get_mut(&m.from)
+                    .expect("crate id exists")
+                    .crates
+                    .pop()
+                    .expect("enough crates"),
+            );
+        }
+        t.reverse();
+        stacks
+            .get_mut(&m.to)
+            .expect("crate id exists")
+            .crates
+            .extend(t);
+    }
+}
+
 #[test]
 fn part1() {
     let (mut stacks, moves) = parse(INPUT);
     apply_moves(&mut stacks, &moves);
+    let mut result = stacks
+        .iter()
+        .map(|(key, stack)| stack)
+        .collect::<Vec<&Stack>>();
+    result.sort_unstable_by(|a, b| a.id.cmp(&b.id));
+    let result = result
+        .iter()
+        .map(|s| s.crates.last().expect("at least a crate per stack").0)
+        .collect::<String>();
+    println!("{:?}", result);
+}
+
+#[test]
+fn part2() {
+    let (mut stacks, moves) = parse(INPUT);
+    apply_moves_together(&mut stacks, &moves);
     let mut result = stacks
         .iter()
         .map(|(key, stack)| stack)
