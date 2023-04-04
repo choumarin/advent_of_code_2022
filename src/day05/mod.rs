@@ -159,7 +159,7 @@ fn part1() {
     apply_moves(&mut stacks, &moves);
     let mut result = stacks
         .iter()
-        .map(|(key, stack)| stack)
+        .map(|(_, stack)| stack)
         .collect::<Vec<&Stack>>();
     result.sort_unstable_by(|a, b| a.id.cmp(&b.id));
     let result = result
@@ -175,7 +175,7 @@ fn part2() {
     apply_moves_together(&mut stacks, &moves);
     let mut result = stacks
         .iter()
-        .map(|(key, stack)| stack)
+        .map(|(_, stack)| stack)
         .collect::<Vec<&Stack>>();
     result.sort_unstable_by(|a, b| a.id.cmp(&b.id));
     let result = result
