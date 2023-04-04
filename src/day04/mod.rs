@@ -39,9 +39,9 @@ fn parse(input: &str) -> Vec<(Range, Range)> {
         .lines()
         .map(|line| {
             let mut ranges = line
-                .split(",")
+                .split(',')
                 .map(|range_str| {
-                    let mut parts = range_str.split("-");
+                    let mut parts = range_str.split('-');
                     Range {
                         start: parts
                             .next()

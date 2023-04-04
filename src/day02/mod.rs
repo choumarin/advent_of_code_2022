@@ -50,7 +50,7 @@ impl Hand {
 
     fn from_outcome(other_hand: &Hand, outcome: &Outcome) -> Hand {
         match outcome {
-            Outcome::Tie => other_hand.clone(),
+            Outcome::Tie => *other_hand,
             Outcome::Win => ((other_hand.score() % 3) + 1).into(),
             Outcome::Loss => (((other_hand.score() + 1) % 3) + 1).into(),
         }

@@ -98,10 +98,10 @@ fn parse(input: &str) -> (HashMap<usize, Stack>, Vec<Move>) {
     for line in stack_lines {
         for i in (0..line.len()).step_by(4) {
             let crate_str = &line[i..i + 2];
-            if crate_str.starts_with("[") || crate_str.ends_with("]") {
+            if crate_str.starts_with('[') || crate_str.ends_with(']') {
                 stacks[i / 4]
                     .crates
-                    .push(Crate(crate_str.chars().skip(1).next().expect("a char")));
+                    .push(Crate(crate_str.chars().nth(1).expect("a char")));
             }
         }
     }

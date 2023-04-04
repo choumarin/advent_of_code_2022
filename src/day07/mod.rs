@@ -3,7 +3,6 @@ use regex::Regex;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
-use std::ops::Deref;
 use std::rc::Rc;
 
 const INPUT: &str = include_str!("input.txt");
