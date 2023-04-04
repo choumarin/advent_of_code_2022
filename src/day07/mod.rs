@@ -168,3 +168,24 @@ fn part1() {
             .sum::<usize>()
     );
 }
+
+#[test]
+fn part2() {
+    let result = parse(INPUT);
+    let system_size = result.size();
+    dbg!(system_size);
+    let avail_size = 70000000 - system_size;
+    dbg!(avail_size);
+    let needed_size = 30000000 - avail_size;
+    dbg!(needed_size);
+    let result = dir_sizes(Rc::new(RCFolder(RefCell::new(result))));
+    dbg!(&result);
+    let mut result = result
+        .iter()
+        .filter_map(|(_, &s)| if s >= needed_size { Some(s) } else { None })
+        .collect::<Vec<_>>();
+    dbg!(&result);
+    result.sort_unstable();
+    dbg!(&result);
+    println!("min = {}", result.first().expect("at least one"));
+}
