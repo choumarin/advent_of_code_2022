@@ -1,6 +1,4 @@
-use crate::day10::MachineRunError::IllegalInstruction;
 use std::str::FromStr;
-use std::thread::current;
 
 const INPUT: &str = include_str!("input.txt");
 
@@ -78,7 +76,7 @@ impl Machine {
 
         if self.cycles_for_current_instruction == 0 {
             match self.current_instruction {
-                None => return Err(IllegalInstruction),
+                None => return Err(MachineRunError::IllegalInstruction),
                 Some(Instruction::Noop) => {}
                 Some(Instruction::Addx(i)) => self.register_x += i,
             }
