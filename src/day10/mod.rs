@@ -111,21 +111,21 @@ mod test {
 addx 3
 addx -5";
         let mut machine = Machine::from_instructions(parse(input));
-        assert_eq!(machine.cycles, 0);
-        machine.run_one_cycle().unwrap();
         assert_eq!(machine.cycles, 1);
-        assert_eq!(machine.register_x, 1);
         machine.run_one_cycle().unwrap();
         assert_eq!(machine.cycles, 2);
         assert_eq!(machine.register_x, 1);
         machine.run_one_cycle().unwrap();
         assert_eq!(machine.cycles, 3);
-        assert_eq!(machine.register_x, 4);
+        assert_eq!(machine.register_x, 1);
         machine.run_one_cycle().unwrap();
         assert_eq!(machine.cycles, 4);
         assert_eq!(machine.register_x, 4);
         machine.run_one_cycle().unwrap();
         assert_eq!(machine.cycles, 5);
+        assert_eq!(machine.register_x, 4);
+        machine.run_one_cycle().unwrap();
+        assert_eq!(machine.cycles, 6);
         assert_eq!(machine.register_x, -1);
     }
 
