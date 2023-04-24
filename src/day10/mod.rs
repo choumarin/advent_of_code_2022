@@ -1,3 +1,4 @@
+use std::fmt::{DebugSet, Formatter};
 use std::str::FromStr;
 
 const INPUT: &str = include_str!("input.txt");
@@ -92,6 +93,57 @@ impl Machine {
         }
         Ok(())
     }
+
+    fn sprite_position(&self) -> [i32; 3] {
+        [self.register_x - 1, self.register_x, self.register_x + 1]
+    }
+
+    fn draw_into_display(&mut self, display: &mut Display) {
+        loop {
+            let row = self.cycles / display.pixels[0].len();
+            let column_cycle = ((self.cycles - 1) % display.pixels[0].len()) + 1; // 1 based
+            let column_pixel = column_cycle - 1; // 0 based
+            println!(
+                "{row},{column_cycle:02},{column_pixel:02}, {:?}",
+                self.sprite_position()
+            );
+            if self.sprite_position().contains(&(column_pixel as i32)) {
+                display.pixels[row][column_pixel] = true;
+            }
+            if self.run_one_cycle().is_err() {
+                break;
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Display {
+    pixels: [[bool; 40]; 6],
+}
+
+impl Default for Display {
+    fn default() -> Self {
+        Self {
+            pixels: [[false; 40]; 6],
+        }
+    }
+}
+
+impl core::fmt::Display for Display {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        for r in self.pixels {
+            for p in r {
+                if p {
+                    write!(f, "#")?;
+                } else {
+                    write!(f, ".")?;
+                }
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
 }
 
 fn parse(input: &str) -> Vec<Instruction> {
@@ -129,9 +181,7 @@ addx -5";
         assert_eq!(machine.register_x, -1);
     }
 
-    #[test]
-    fn it_runs_full() {
-        let input = r"addx 15
+    const TEST_INPUT: &str = r"addx 15
 addx -11
 addx 6
 addx -3
@@ -277,7 +327,24 @@ addx -11
 noop
 noop
 noop";
-        assert_eq!(part1_run(parse(input)), Ok(13140));
+
+    #[test]
+    fn it_runs_full() {
+        assert_eq!(part1_run(parse(TEST_INPUT)), Ok(13140));
+    }
+
+    #[test]
+    fn it_draws() {
+        let mut machine = Machine::from_instructions(parse(TEST_INPUT));
+        let mut display = Display::default();
+        machine.draw_into_display(&mut display);
+        let expected_display = r"##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....";
+        assert_eq!(format!("{}", display), expected_display)
     }
 }
 
@@ -299,4 +366,13 @@ fn part1_run(instructions: Vec<Instruction>) -> Result<i32, MachineRunError> {
 fn part1() {
     let instructions = parse(INPUT);
     println!("{}", part1_run(instructions).unwrap());
+}
+
+#[test]
+fn part2() {
+    let instructions = parse(INPUT);
+    let mut machine = Machine::from_instructions(instructions);
+    let mut display = Display::default();
+    machine.draw_into_display(&mut display);
+    println!("{}", display);
 }
