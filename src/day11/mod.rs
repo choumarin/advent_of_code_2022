@@ -46,14 +46,18 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn do_action_and_throw(&mut self) -> HashMap<usize, Vec<Item>> {
+    fn do_action_and_throw(&mut self, worry_reducer: Option<usize>) -> HashMap<usize, Vec<Item>> {
         let mut throws: HashMap<usize, Vec<_>> = HashMap::new();
         for mut item in self.items.drain(..) {
             self.inspections += 1;
             throws
                 .entry({
                     item.operation(self.operation);
-                    item.0 /= 3;
+                    if let Some(modulo) = worry_reducer {
+                        item.0 %= modulo;
+                    } else {
+                        item.0 /= 3;
+                    }
                     if item.test(self.test) {
                         self.to_monkey_id_if_true
                     } else {
@@ -82,10 +86,13 @@ fn distribute(monkeys: &mut HashMap<usize, Monkey>, mut throws: HashMap<usize, V
     }
 }
 
-fn do_one_round(monkeys: &mut HashMap<usize, Monkey>) {
+fn do_one_round(monkeys: &mut HashMap<usize, Monkey>, worry_reducer: Option<usize>) {
     // this cheats around the double borrow, but we need to process in order
     for i in 0..monkeys.len() {
-        let throw = monkeys.get_mut(&i).unwrap().do_action_and_throw();
+        let throw = monkeys
+            .get_mut(&i)
+            .unwrap()
+            .do_action_and_throw(worry_reducer);
         distribute(monkeys, throw);
     }
 }
@@ -228,7 +235,7 @@ Monkey 3:
     fn it_throws() {
         let mut monkeys = parse(INPUT_TEST);
         let m0 = monkeys.get_mut(&0).unwrap();
-        let throw0 = m0.do_action_and_throw();
+        let throw0 = m0.do_action_and_throw(None);
         assert_eq!(
             throw0
                 .clone()
@@ -248,7 +255,7 @@ Monkey 3:
     #[test]
     fn one_round() {
         let mut monkeys = parse(INPUT_TEST);
-        do_one_round(&mut monkeys);
+        do_one_round(&mut monkeys, None);
         assert_eq!(
             monkeys.get(&0).unwrap().items,
             vec![Item(20), Item(23), Item(27), Item(26)]
@@ -274,7 +281,26 @@ fn part1() {
     let mut monkeys = parse(INPUT);
 
     for _ in 0..20 {
-        do_one_round(&mut monkeys);
+        do_one_round(&mut monkeys, None);
+    }
+    let mut actives = monkeys.values().map(|m| m.inspections).collect::<Vec<_>>();
+    actives.sort_unstable();
+    actives.reverse();
+    let res = actives.into_iter().take(2).reduce(|a, b| a * b).unwrap();
+    println!("{}", res);
+}
+
+#[test]
+fn part2() {
+    let mut monkeys = parse(INPUT);
+
+    let modulo = monkeys.values().fold(1, |a, m| {
+        let DivisibleBy(i) = m.test;
+        a * i
+    });
+
+    for _ in 0..10000 {
+        do_one_round(&mut monkeys, Some(modulo));
     }
     let mut actives = monkeys.values().map(|m| m.inspections).collect::<Vec<_>>();
     actives.sort_unstable();
