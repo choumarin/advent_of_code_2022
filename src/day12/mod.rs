@@ -96,11 +96,29 @@ fn parse(input: &str) -> Map {
 }
 
 fn traverse(map: &Map) -> Option<usize> {
+    let mut start_queue = VecDeque::new();
+    start_queue.push_front(map.start);
+    bfs(map, start_queue)
+}
+
+fn all_mins(map: &Map) -> Option<usize> {
+    let mut start_queue = VecDeque::new();
+
+    for (y, line) in map.elevations.iter().enumerate() {
+        for (x, &e) in line.iter().enumerate() {
+            if e == Elevation::try_from('a').unwrap() {
+                start_queue.push_front(Coord(x, y));
+            }
+        }
+    }
+
+    bfs(map, start_queue)
+}
+
+fn bfs(map: &Map, mut queue: VecDeque<Coord>) -> Option<usize> {
     let mut visited = HashSet::new();
     let mut steps = 0;
-    let mut queue = VecDeque::new();
-    // BFS: queue / DFS: stack
-    queue.push_front(map.start);
+
     while !queue.is_empty() {
         // there's probably a way to avoid the copy here by just counting how many or using 2 queues and swapping
         for current in queue.drain(..).collect::<Vec<_>>() {
@@ -116,13 +134,12 @@ fn traverse(map: &Map) -> Option<usize> {
         }
         steps += 1;
     }
-    // no path
     None
 }
 
 #[cfg(test)]
 mod test {
-    use crate::day12::{parse, traverse, Coord, Elevation};
+    use crate::day12::{all_mins, parse, traverse, Coord, Elevation};
 
     const INPUT_TEST: &str = r"Sabqponm
 abcryxxl
@@ -155,10 +172,22 @@ abdefghi";
         let map = parse(INPUT_TEST);
         assert_eq!(traverse(&map), Some(31));
     }
+
+    #[test]
+    fn it_starts_everywhere() {
+        let map = parse(INPUT_TEST);
+        assert_eq!(all_mins(&map), Some(29));
+    }
 }
 
 #[test]
 fn part1() {
     let map = parse(INPUT);
     println!("{:?}", traverse(&map));
+}
+
+#[test]
+fn part2() {
+    let map = parse(INPUT);
+    println!("{:?}", all_mins(&map));
 }
