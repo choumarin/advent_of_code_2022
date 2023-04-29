@@ -3,43 +3,44 @@ use std::cmp::Ordering;
 
 const INPUT: &str = include_str!("input.txt");
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 struct MyData(serde_json::value::Value);
 
-impl PartialOrd for MyData {
+impl PartialOrd<Self> for MyData {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for MyData {
+    fn cmp(&self, other: &Self) -> Ordering {
         match (&self.0, &other.0) {
             (Value::Array(a), Value::Array(b)) => {
                 for i in 0..a.len() {
                     let a = a.get(i).unwrap().clone();
                     let Some(b) = b.get(i) else {
-                        return Some(Ordering::Greater);
+                        return Ordering::Greater;
                     };
-                    match MyData(a).partial_cmp(&MyData(b.clone())) {
-                        None => {
-                            panic!("no comparison between {:?} and {:?}", self, other)
-                        }
-                        Some(Ordering::Equal) => {
+                    match MyData(a).cmp(&MyData(b.clone())) {
+                        Ordering::Equal => {
                             continue;
                         }
-                        Some(other) => {
-                            return Some(other);
+                        other => {
+                            return other;
                         }
                     }
                 }
                 if a.len() == b.len() {
-                    return Some(Ordering::Equal);
+                    return Ordering::Equal;
                 }
-                Some(Ordering::Less)
+                Ordering::Less
             }
-            (Value::Number(a), Value::Number(b)) => {
-                a.as_u64().unwrap().partial_cmp(&b.as_u64().unwrap())
-            }
+            (Value::Number(a), Value::Number(b)) => a.as_u64().unwrap().cmp(&b.as_u64().unwrap()),
             (Value::Array(_), Value::Number(_)) => {
-                self.partial_cmp(&MyData(Value::Array(vec![other.0.clone()])))
+                self.cmp(&MyData(Value::Array(vec![other.0.clone()])))
             }
             (Value::Number(_), Value::Array(_)) => {
-                MyData(Value::Array(vec![self.0.clone()])).partial_cmp(&other)
+                MyData(Value::Array(vec![self.0.clone()])).cmp(&other)
             }
             (_, _) => {
                 panic!("don't care for this one")
@@ -85,14 +86,14 @@ mod test {
     #[test]
     fn it_cmp() {
         let data = parse(INPUT_TEST);
-        assert_eq!(data[0][0].partial_cmp(&data[0][1]), Some(Ordering::Less));
-        assert_eq!(data[1][0].partial_cmp(&data[1][1]), Some(Ordering::Less));
-        assert_eq!(data[2][0].partial_cmp(&data[2][1]), Some(Ordering::Greater));
-        assert_eq!(data[3][0].partial_cmp(&data[3][1]), Some(Ordering::Less));
-        assert_eq!(data[4][0].partial_cmp(&data[4][1]), Some(Ordering::Greater));
-        assert_eq!(data[5][0].partial_cmp(&data[5][1]), Some(Ordering::Less));
-        assert_eq!(data[6][0].partial_cmp(&data[6][1]), Some(Ordering::Greater));
-        assert_eq!(data[7][0].partial_cmp(&data[7][1]), Some(Ordering::Greater));
+        assert_eq!(data[0][0].cmp(&data[0][1]), Ordering::Less);
+        assert_eq!(data[1][0].cmp(&data[1][1]), Ordering::Less);
+        assert_eq!(data[2][0].cmp(&data[2][1]), Ordering::Greater);
+        assert_eq!(data[3][0].cmp(&data[3][1]), Ordering::Less);
+        assert_eq!(data[4][0].cmp(&data[4][1]), Ordering::Greater);
+        assert_eq!(data[5][0].cmp(&data[5][1]), Ordering::Less);
+        assert_eq!(data[6][0].cmp(&data[6][1]), Ordering::Greater);
+        assert_eq!(data[7][0].cmp(&data[7][1]), Ordering::Greater);
     }
 }
 
@@ -114,7 +115,29 @@ fn part1() {
         .into_iter()
         .enumerate()
         .map(|(i, pair)| (i + 1, pair))
-        .filter(|(_, pair)| pair[0].partial_cmp(&pair[1]) == Some(Ordering::Less))
+        .filter(|(_, pair)| pair[0].cmp(&pair[1]) == Ordering::Less)
         .fold(0, |acc, (i, _)| acc + i);
+    println!("{:?}", res);
+}
+
+#[test]
+fn part2() {
+    let mut data = parse(INPUT).into_iter().flatten().collect::<Vec<_>>();
+    let more_packets = r"[[2]]
+[[6]]";
+    let more_packets = parse(more_packets)
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    data.extend(more_packets.clone());
+    data.sort_unstable();
+    let res = data
+        .into_iter()
+        .enumerate()
+        .map(|(i, p)| (i + 1, p))
+        .filter(|(_, p)| more_packets.contains(p))
+        .map(|(i, _)| i)
+        .reduce(|a, b| a * b)
+        .unwrap();
     println!("{:?}", res);
 }
