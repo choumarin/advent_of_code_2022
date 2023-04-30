@@ -34,8 +34,7 @@ impl Point {
     }
 
     fn will_settle(&self, s: &Structure) -> bool {
-        s.sand.iter().any(|p| p.x == self.x && p.y > self.y)
-            || s.rock.iter().any(|p| p.x == self.x && p.y > self.y)
+        self.y <= s.max_y
     }
 }
 
@@ -56,6 +55,7 @@ struct Structure {
     rock: HashSet<Point>,
     sand: HashSet<Point>,
     falling_grain: Option<Point>,
+    max_y: i32,
     part: Part,
 }
 
@@ -64,7 +64,7 @@ impl Display for Structure {
         let mut min_x = self.rock.iter().min_by_key(|p| p.x).unwrap().x;
         let mut max_x = self.rock.iter().max_by_key(|p| p.x).unwrap().x;
         let mut min_y = self.rock.iter().min_by_key(|p| p.y).unwrap().y;
-        let mut max_y = self.max_y();
+        let mut max_y = self.max_y;
         if !self.sand.is_empty() {
             min_x = min_x.min(self.sand.iter().min_by_key(|p| p.x).unwrap().x);
             max_x = max_x.max(self.sand.iter().max_by_key(|p| p.x).unwrap().x);
@@ -136,13 +136,14 @@ impl Structure {
                 }
             }
         }
+        s.max_y = s.rock.iter().max_by_key(|p| p.y).unwrap().y;
         s
     }
 
     fn accept(&self, grain: Point) -> bool {
         let mut accept = !self.rock.contains(&grain) && !self.sand.contains(&grain);
         if self.part == Part::Part2 {
-            accept = accept && (grain.y < self.max_y() + 2)
+            accept = accept && (grain.y < self.max_y + 2)
         }
         accept
     }
@@ -183,10 +184,6 @@ impl Structure {
             self.cycle();
         }
         self.sand.len()
-    }
-
-    fn max_y(&self) -> i32 {
-        self.rock.iter().max_by_key(|p| p.y).unwrap().y
     }
 }
 
