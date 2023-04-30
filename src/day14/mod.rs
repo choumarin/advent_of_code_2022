@@ -18,21 +18,36 @@ impl Point {
             y: self.y + 1,
         }
     }
+
     fn left(&self) -> Self {
         Self {
             x: self.x - 1,
             y: self.y + 1,
         }
     }
+
     fn right(&self) -> Self {
         Self {
             x: self.x + 1,
             y: self.y + 1,
         }
     }
+
     fn will_settle(&self, s: &Structure) -> bool {
         s.sand.iter().any(|p| p.x == self.x && p.y > self.y)
             || s.rock.iter().any(|p| p.x == self.x && p.y > self.y)
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+enum Part {
+    Part1,
+    Part2,
+}
+
+impl Default for Part {
+    fn default() -> Self {
+        Part::Part1
     }
 }
 
@@ -41,6 +56,7 @@ struct Structure {
     rock: HashSet<Point>,
     sand: HashSet<Point>,
     falling_grain: Option<Point>,
+    part: Part,
 }
 
 impl Display for Structure {
@@ -48,7 +64,7 @@ impl Display for Structure {
         let mut min_x = self.rock.iter().min_by_key(|p| p.x).unwrap().x;
         let mut max_x = self.rock.iter().max_by_key(|p| p.x).unwrap().x;
         let mut min_y = self.rock.iter().min_by_key(|p| p.y).unwrap().y;
-        let mut max_y = self.rock.iter().max_by_key(|p| p.y).unwrap().y;
+        let mut max_y = self.max_y();
         if !self.sand.is_empty() {
             min_x = min_x.min(self.sand.iter().min_by_key(|p| p.x).unwrap().x);
             max_x = max_x.max(self.sand.iter().max_by_key(|p| p.x).unwrap().x);
@@ -60,6 +76,9 @@ impl Display for Structure {
             max_x = max_x.max(grain.x);
             min_y = min_y.min(grain.y);
             max_y = max_y.max(grain.y);
+        }
+        if self.part == Part::Part2 {
+            max_y += 2;
         }
 
         for y in (min_y - 1)..=(max_y + 1) {
@@ -85,18 +104,15 @@ impl Structure {
         let mut s = Structure::default();
         for line in lines {
             for segment in line.windows(2) {
-                // println!("{:?} -> {:?}", segment[0], segment[1]);
                 if segment[0].x == segment[1].x {
                     // vertical
                     let x = segment[0].x;
                     if segment[0].y <= segment[1].y {
                         for y in segment[0].y..=segment[1].y {
-                            // print!("{:?} ", y);
                             s.rock.insert(Point { x, y });
                         }
                     } else {
                         for y in segment[1].y..=segment[0].y {
-                            // print!("{:?} ", y);
                             s.rock.insert(Point { x, y });
                         }
                     }
@@ -105,12 +121,10 @@ impl Structure {
                     let y = segment[0].y;
                     if segment[0].x <= segment[1].x {
                         for x in segment[0].x..=segment[1].x {
-                            // print!("{:?} ", x);
                             s.rock.insert(Point { x, y });
                         }
                     } else {
                         for x in segment[1].x..=segment[0].x {
-                            // print!("{:?} ", x);
                             s.rock.insert(Point { x, y });
                         }
                     }
@@ -126,45 +140,53 @@ impl Structure {
     }
 
     fn accept(&self, grain: Point) -> bool {
-        !self.rock.contains(&grain) && !self.sand.contains(&grain)
+        let mut accept = !self.rock.contains(&grain) && !self.sand.contains(&grain);
+        if self.part == Part::Part2 {
+            accept = accept && (grain.y < self.max_y() + 2)
+        }
+        accept
     }
 
     fn cycle(&mut self) {
         if let Some(grain) = self.falling_grain {
             if self.accept(grain.down()) {
-                // dbg!(".");
                 self.falling_grain = Some(grain.down());
             } else if self.accept(grain.left()) {
-                // dbg!(".");
                 self.falling_grain = Some(grain.left());
             } else if self.accept(grain.right()) {
-                // dbg!(".");
                 self.falling_grain = Some(grain.right());
             } else {
-                // dbg!(".");
                 self.sand.insert(grain);
                 self.falling_grain = None;
             }
         } else {
-            // dbg!(".");
             self.falling_grain = Some(SOURCE);
             self.cycle();
         }
     }
 
     fn is_stable(&self) -> bool {
-        if let Some(grain) = self.falling_grain {
-            !grain.will_settle(self)
-        } else {
-            false
+        match self.part {
+            Part::Part1 => {
+                if let Some(grain) = self.falling_grain {
+                    !grain.will_settle(self)
+                } else {
+                    false
+                }
+            }
+            Part::Part2 => self.sand.contains(&SOURCE),
         }
     }
 
     fn units_of_sand_until_stable(mut self) -> usize {
         while !self.is_stable() {
-            self.cycle()
+            self.cycle();
         }
         self.sand.len()
+    }
+
+    fn max_y(&self) -> i32 {
+        self.rock.iter().max_by_key(|p| p.y).unwrap().y
     }
 }
 
@@ -193,7 +215,6 @@ mod test {
     fn it_cycles() {
         let data = parse(INPUT_TEST);
         let mut structure = Structure::from(data);
-        println!("{structure}");
         while !structure.is_stable() {
             structure.cycle();
             println!("{structure}");
@@ -204,6 +225,25 @@ mod test {
     fn it_counts() {
         let mut structure = Structure::from(parse(INPUT_TEST));
         assert_eq!(structure.units_of_sand_until_stable(), 24);
+    }
+
+    #[test]
+    fn it_cycles_part2() {
+        let data = parse(INPUT_TEST);
+        let mut structure = Structure::from(data);
+        structure.part = Part::Part2;
+        println!("{structure}");
+        while !structure.is_stable() {
+            structure.cycle();
+            println!("{structure}");
+        }
+    }
+
+    #[test]
+    fn it_counts_part2() {
+        let mut structure = Structure::from(parse(INPUT_TEST));
+        structure.part = Part::Part2;
+        assert_eq!(structure.units_of_sand_until_stable(), 93);
     }
 }
 
@@ -231,4 +271,8 @@ fn part1() {
 }
 
 #[test]
-fn part2() {}
+fn part2() {
+    let mut structure = Structure::from(parse(INPUT));
+    structure.part = Part::Part2;
+    println!("{}", structure.units_of_sand_until_stable());
+}
