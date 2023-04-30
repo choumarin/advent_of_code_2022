@@ -1,4 +1,4 @@
-use std::fmt::{DebugSet, Formatter};
+use std::fmt::Formatter;
 use std::str::FromStr;
 
 const INPUT: &str = include_str!("input.txt");

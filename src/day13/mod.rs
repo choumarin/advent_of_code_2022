@@ -40,7 +40,7 @@ impl Ord for MyData {
                 self.cmp(&MyData(Value::Array(vec![other.0.clone()])))
             }
             (Value::Number(_), Value::Array(_)) => {
-                MyData(Value::Array(vec![self.0.clone()])).cmp(&other)
+                MyData(Value::Array(vec![self.0.clone()])).cmp(other)
             }
             (_, _) => {
                 panic!("don't care for this one")
